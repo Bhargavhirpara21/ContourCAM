@@ -1,0 +1,16 @@
+# Normalize line endings: LF in the repo for everything text, so the
+# cross-platform build (Linux CI + Windows) stays consistent.
+* text=auto eol=lf
+
+# Windows tooling is happier with CRLF for these:
+*.sln    text eol=crlf
+*.csproj text eol=crlf
+
+# Treat common binary assets as binary (no eol munging):
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.pdf  binary
+*.step binary
+*.stp  binary

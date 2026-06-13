@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bridge:
+    name: Build & prove bridge (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            preset: windows-msvc
+            libdir: build/bin/Release
+          - os: ubuntu-latest
+            preset: linux-ninja
+            libdir: build/bin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ninja (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Configure native core
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build native core
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build C# smoke
+        run: dotnet build app-csharp/smoke -c Release --nologo
+
+      - name: Run C# smoke (P/Invoke)
+        shell: bash
+        run: |
+          out="app-csharp/smoke/bin/Release/net8.0"
+          cp "${{ matrix.libdir }}"/*contourcam_core.* "$out"/
+          dotnet "$out/contourcam-smoke.dll"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Python smoke (ctypes)
+        run: python automation-python/smoke.py "${{ matrix.libdir }}"

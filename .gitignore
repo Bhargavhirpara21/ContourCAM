@@ -1,0 +1,30 @@
+# --- Build output ---
+/build/
+/out/
+**/bin/
+**/obj/
+vcpkg_installed/
+
+# --- CMake ---
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+*.cmake.stamp
+
+# --- .NET / C# ---
+*.user
+*.suo
+.vs/
+
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# --- IDE ---
+.idea/
+
+# --- OS ---
+Thumbs.db
+.DS_Store
