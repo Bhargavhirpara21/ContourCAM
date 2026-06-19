@@ -1,11 +1,34 @@
 # ContourCAM native core -- the GUI-free C++ engine behind the flat C ABI.
-# Phase 0: a hello-world shared library with no external dependencies (OCCT and
-# GoogleTest arrive in Phase 1).
+# Phase 1: a dependency-free C++ geometry library (DXF ingestion, wire assembly,
+# island detection) built as a static lib, consumed by both the shared C ABI and
+# the GoogleTest suite. OCCT arrives in Phase 2 for robust offsetting.
 
+# --- Geometry engine (authored, no external dependencies) ------------------
+add_library(contourcam_geometry STATIC
+    src/geom/dxf_reader.cpp
+    src/geom/wire_builder.cpp
+    src/geom/part_model.cpp
+)
+
+target_include_directories(contourcam_geometry
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+)
+
+target_compile_features(contourcam_geometry PUBLIC cxx_std_20)
+
+# Static lib is linked into a shared library, so it must be position-independent.
+set_target_properties(contourcam_geometry PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+)
+
+# --- Flat C ABI shared library --------------------------------------------
 add_library(contourcam_core SHARED
     src/contourcam_core.cpp
     include/contourcam_c_api.h
 )
+
+target_link_libraries(contourcam_core PRIVATE contourcam_geometry)
 
 target_include_directories(contourcam_core
     PUBLIC

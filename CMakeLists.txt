@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(ContourCAM
-    VERSION 0.0.1
+    VERSION 0.1.0
     DESCRIPTION "2.5D CAM toolpath & G-code generator (native core)"
     LANGUAGES CXX
 )
@@ -27,3 +27,11 @@ else()
 endif()
 
 add_subdirectory(core)
+
+# Unit tests pull GoogleTest via FetchContent (fast, self-contained); disable
+# with -DCONTOURCAM_BUILD_TESTS=OFF for a tests-free build.
+option(CONTOURCAM_BUILD_TESTS "Build the C++ unit test suite" ON)
+if(CONTOURCAM_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(core/tests)
+endif()

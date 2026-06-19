@@ -42,28 +42,40 @@ reimplement geometry.
 
 ## Status
 
-**Phase 0 — proving the bridge.** A hello-world C++ shared library is called
-from both C# (P/Invoke) and Python (ctypes), de-risking the interop before any
-geometry code is written. See the build steps below.
+**Phase 1 — geometry ingestion.** The native core now reads the supported DXF
+entity subset (LINE, ARC, CIRCLE, LWPOLYLINE, POLYLINE) with a hand-rolled,
+tolerant reader, stitches loose edges into closed wires (healing small gaps),
+and classifies those wires into an island/containment hierarchy (outer profile
+vs. pockets/holes). It is covered by a GoogleTest suite that runs in CI on
+Windows + Linux. OpenCASCADE is deferred to Phase 2, where it powers robust
+2D offsetting/pocketing.
 
-## Build & run the Phase 0 bridge
+The Phase 0 bridge (below) still stands: one C++ shared library called from
+both C# (P/Invoke) and Python (ctypes).
+
+## Build & run
 
 **Prerequisites:** CMake ≥ 3.21, a C++20 compiler (MSVC v143 on Windows,
-GCC ≥ 11 / Clang ≥ 14 on Linux), .NET 8 SDK, Python 3.11+.
+GCC ≥ 11 / Clang ≥ 14 on Linux), .NET 8 SDK, Python 3.11+. GoogleTest is
+fetched automatically at configure time.
 
 ```bash
-# 1. Build the native core
+# 1. Build the native core + geometry library + tests
 cmake --preset windows-msvc        # or: cmake --preset linux-ninja
 cmake --build --preset windows-msvc
 
-# 2. Run the C# smoke (native lib must be next to the executable)
+# 2. Run the C++ unit tests
+ctest --test-dir build -C Release --output-on-failure
+
+# 3. Run the C# smoke (native lib must be next to the executable)
 dotnet run --project app-csharp/smoke
 
-# 3. Run the Python smoke (point it at the build output dir)
-python automation-python/smoke.py build/bin
+# 4. Run the Python smoke (point it at the build output dir)
+python automation-python/smoke.py build/bin/Release   # Linux: build/bin
 ```
 
-All three should report the same `cc_add(2, 3) = 5` from the one shared library.
+The smoke layers should all report the same `cc_add(2, 3) = 5` from the one
+shared library; the unit tests cover the Phase 1 geometry pipeline.
 
 ## License
 

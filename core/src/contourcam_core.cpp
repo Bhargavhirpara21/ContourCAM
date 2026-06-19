@@ -16,7 +16,7 @@ namespace {
 // next ABI call on the same thread overwrites it.
 thread_local std::string g_last_error;
 
-constexpr const char* kVersion = "ContourCAM 0.0.1 (Phase 0 bridge)";
+constexpr const char* kVersion = "ContourCAM 0.1.0 (Phase 1 geometry)";
 
 }  // namespace
 
