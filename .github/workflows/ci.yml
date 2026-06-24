@@ -93,3 +93,37 @@ jobs:
         run: |
           CONTOURCAM_LIB_DIR="$PWD/${{ matrix.libdir }}" \
             dotnet test app-csharp/tests/ContourCam.Tests.csproj -c Release --nologo
+
+  # OpenCASCADE-backed pocket clearing. Separate job so the heavy OCCT build
+  # (cached via the GitHub Actions cache after the first run) never gates the fast
+  # 'bridge' job. Skipped on PRs to avoid a long build on every pull request.
+  pocket-occt:
+    name: Pocket clearing (OpenCASCADE)
+    runs-on: windows-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # Expose the Actions cache so vcpkg's x-gha binary cache can store/restore
+      # the built OpenCASCADE between runs.
+      - name: Export Actions cache env for vcpkg
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Build + test with OpenCASCADE
+        shell: bash
+        env:
+          VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+        run: |
+          export VCPKG_ROOT="$VCPKG_INSTALLATION_ROOT"   # runner's preinstalled vcpkg
+          cmake --preset windows-occt
+          cmake --build --preset windows-occt
+          ctest --test-dir build --output-on-failure
