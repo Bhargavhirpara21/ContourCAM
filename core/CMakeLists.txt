@@ -9,6 +9,7 @@ add_library(contourcam_geometry STATIC
     src/geom/wire_builder.cpp
     src/geom/part_model.cpp
     src/cam/toolpath.cpp
+    src/cam/gcode.cpp
 )
 
 target_include_directories(contourcam_geometry
