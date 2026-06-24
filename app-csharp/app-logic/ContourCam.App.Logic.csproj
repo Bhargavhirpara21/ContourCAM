@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WPF-free app logic (view-model, render scene, view transform, parameters).
+    net8.0 so it is unit-testable on Windows AND Linux without a GUI. The WPF
+    project holds only XAML, code-behind and the viewport control.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ContourCam.App.Logic</RootNamespace>
+    <AssemblyName>ContourCam.App.Logic</AssemblyName>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../interop/ContourCam.Interop.csproj" />
+  </ItemGroup>
+
+</Project>

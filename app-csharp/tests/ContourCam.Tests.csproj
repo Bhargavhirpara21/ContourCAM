@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Cross-platform (net8.0) unit tests. Pure tests (transform, params, scene)
+    run everywhere; interop round-trip tests run only when CONTOURCAM_LIB_DIR
+    points at a built native core (skipped otherwise).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../interop/ContourCam.Interop.csproj" />
+    <ProjectReference Include="../app-logic/ContourCam.App.Logic.csproj" />
+  </ItemGroup>
+
+</Project>
