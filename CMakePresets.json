@@ -4,10 +4,17 @@
   "configurePresets": [
     {
       "name": "windows-msvc",
-      "displayName": "Windows MSVC (x64)",
+      "displayName": "Windows MSVC - Visual Studio (local convenience)",
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
       "binaryDir": "${sourceDir}/build"
+    },
+    {
+      "name": "windows-ninja",
+      "displayName": "Windows MSVC - Ninja (CI; run from a VS/Developer environment)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
       "name": "linux-ninja",
@@ -18,14 +25,8 @@
     }
   ],
   "buildPresets": [
-    {
-      "name": "windows-msvc",
-      "configurePreset": "windows-msvc",
-      "configuration": "Release"
-    },
-    {
-      "name": "linux-ninja",
-      "configurePreset": "linux-ninja"
-    }
+    { "name": "windows-msvc", "configurePreset": "windows-msvc", "configuration": "Release" },
+    { "name": "windows-ninja", "configurePreset": "windows-ninja" },
+    { "name": "linux-ninja", "configurePreset": "linux-ninja" }
   ]
 }

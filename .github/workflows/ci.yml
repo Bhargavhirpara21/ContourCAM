@@ -15,8 +15,8 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            preset: windows-msvc
-            libdir: build/bin/Release
+            preset: windows-ninja
+            libdir: build/bin
           - os: ubuntu-latest
             preset: linux-ninja
             libdir: build/bin
@@ -27,6 +27,14 @@ jobs:
       - name: Install Ninja (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      # Put MSVC (cl) on PATH so the Ninja generator works without pinning a
+      # specific Visual Studio version (robust across GitHub runner images).
+      - name: Set up MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Configure native core
         run: cmake --preset ${{ matrix.preset }}
