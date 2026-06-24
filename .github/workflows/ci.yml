@@ -55,8 +55,12 @@ jobs:
       - name: Run C# smoke (P/Invoke -> geometry)
         shell: bash
         run: |
-          out="app-csharp/smoke/bin/Release/net8.0"
+          set -ex
+          # Locate the built assembly (output dir can be bin/Release or
+          # bin/x64/Release depending on platform) instead of hardcoding it.
+          out=$(dirname "$(find app-csharp/smoke/bin -name contourcam-smoke.dll | head -n1)")
           cp "${{ matrix.libdir }}"/*contourcam_core.* "$out"/
+          ls -la "$out"
           dotnet "$out/contourcam-smoke.dll" samples/plate_pocket_holes.dxf
 
       - uses: actions/setup-python@v5
