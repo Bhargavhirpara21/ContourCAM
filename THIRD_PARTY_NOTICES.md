@@ -10,9 +10,14 @@ It uses the following third-party components. Each remains under its own license
 - Fetched at configure time via CMake `FetchContent`; not distributed with the
   ContourCAM binaries.
 
-## OpenCASCADE Technology (OCCT)
-- **Status:** *not yet integrated.* Planned for Phase 2 (robust 2D offsetting /
-  pocketing and STEP import). This entry will be completed when OCCT is added.
-- **Expected license:** LGPL-2.1 with the Open CASCADE exception. OCCT will be
-  used via **dynamic linking** so ContourCAM's own code can remain MIT, and the
-  OCCT license texts will be reproduced here at that time.
+## OpenCASCADE Technology (OCCT) 8.0.0
+- **Used for:** robust 2D offsetting / pocket clearing (`core/src/cam/pocket.cpp`).
+  Only compiled into the optional `CONTOURCAM_USE_OCCT` build; the default build
+  does not depend on OCCT.
+- **License:** LGPL-2.1 **with the Open CASCADE exception**.
+- **Source:** https://github.com/Open-Cascade-SAS/OCCT (built via vcpkg).
+- **Linking:** **dynamic** (separate, replaceable `TK*.dll` shared libraries, see
+  `vcpkg-triplets/x64-windows-rel.cmake`), so ContourCAM's own MIT-licensed code
+  is not subject to copyleft. The OCCT license texts (`LICENSE_LGPL_21.txt` +
+  `OCCT_LGPL_EXCEPTION.txt`) ship with the OCCT distribution and are reproduced
+  alongside any binary release that bundles the OCCT DLLs.

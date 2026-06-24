@@ -159,7 +159,8 @@ typedef struct cc_job_params {
     double plunge_feed;
     double spindle_rpm;
     double safe_z_mm;
-    int32_t direction;  /* cc_cut_direction */
+    int32_t direction;       /* cc_cut_direction */
+    double pocket_depth_mm;  /* pocket floor depth; 0 => use target_depth_mm */
 } cc_job_params;
 
 typedef struct cc_post_params {

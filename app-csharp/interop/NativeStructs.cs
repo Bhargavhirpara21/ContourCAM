@@ -52,6 +52,7 @@ public struct JobParams
     public double SpindleRpm;
     public double SafeZmm;
     public int Direction;  // CutDirection
+    public double PocketDepthMm;  // pocket floor depth; 0 => use TargetDepthMm
 }
 
 [StructLayout(LayoutKind.Sequential)]

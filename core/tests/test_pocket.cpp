@@ -46,20 +46,26 @@ TEST(Pocket, ToolpathClearsSamplePocket) {
     mill.type = ToolType::EndMill;
     mill.diameter_mm = 6.0;
     JobParams job;
-    job.target_depth_mm = 5.0;
+    job.target_depth_mm = 6.0;   // outer profile through the 6 mm stock
+    job.pocket_depth_mm = 5.0;   // pocket floor at 5 mm (PRD section 7)
     job.step_down_mm = 2.0;
     job.stepover_frac = 0.45;
 
     const Toolpath tp = generateToolpath(m, mill, job);
 
     bool insidePocket = false;
+    bool pocketFloorAt5 = false;
+    bool contourAt6 = false;
     for (const Segment& s : tp.segments) {
-        if (s.kind == SegmentKind::Feed && s.x > 33 && s.x < 67 && s.y > 28 && s.y < 52) {
-            insidePocket = true;
-            break;
-        }
+        if (s.kind != SegmentKind::Feed) continue;
+        const bool inPocketXY = s.x > 33 && s.x < 67 && s.y > 28 && s.y < 52;
+        if (inPocketXY) insidePocket = true;
+        if (inPocketXY && std::abs(s.z + 5.0) < 1e-6) pocketFloorAt5 = true;
+        if (std::abs(s.z + 6.0) < 1e-6) contourAt6 = true;
     }
     // With OCCT the pocket is cleared (feed moves inside it); without OCCT the end
     // mill only profiles the outside, so no feed moves land inside the pocket.
     EXPECT_EQ(insidePocket, occtEnabled());
+    EXPECT_TRUE(contourAt6);  // outer contour reaches the 6 mm stock depth (both builds)
+    if (occtEnabled()) EXPECT_TRUE(pocketFloorAt5);  // pocket floor honours its own depth
 }

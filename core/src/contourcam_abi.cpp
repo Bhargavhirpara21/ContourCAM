@@ -263,6 +263,7 @@ cc_status CC_CALL cc_generate_toolpath(cc_document doc, const cc_tool_params* to
 
         contourcam::JobParams j;
         j.target_depth_mm = job->target_depth_mm;
+        j.pocket_depth_mm = job->pocket_depth_mm;
         j.step_down_mm = job->step_down_mm;
         j.stepover_frac = job->stepover_frac;
         j.feed = job->feed;

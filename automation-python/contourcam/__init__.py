@@ -52,6 +52,7 @@ class JobParams(ctypes.Structure):
         ("stepover_frac", ctypes.c_double), ("feed", ctypes.c_double),
         ("plunge_feed", ctypes.c_double), ("spindle_rpm", ctypes.c_double),
         ("safe_z_mm", ctypes.c_double), ("direction", ctypes.c_int32),
+        ("pocket_depth_mm", ctypes.c_double),  # 0 => use target_depth_mm
     ]
 
 

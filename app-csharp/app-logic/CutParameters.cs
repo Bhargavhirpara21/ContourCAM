@@ -14,6 +14,7 @@ public sealed class CutParameters : INotifyPropertyChanged
     private int _flutes = 2;
     private ToolType _toolType = ToolType.EndMill;
     private double _targetDepthMm = 6.0;
+    private double _pocketDepthMm = 5.0;
     private double _stepDownMm = 2.0;
     private double _stepoverFrac = 0.45;
     private double _feed = 600.0;
@@ -28,6 +29,7 @@ public sealed class CutParameters : INotifyPropertyChanged
     public int Flutes { get => _flutes; set => Set(ref _flutes, value); }
     public ToolType ToolType { get => _toolType; set => Set(ref _toolType, value); }
     public double TargetDepthMm { get => _targetDepthMm; set => Set(ref _targetDepthMm, value); }
+    public double PocketDepthMm { get => _pocketDepthMm; set => Set(ref _pocketDepthMm, value); }
     public double StepDownMm { get => _stepDownMm; set => Set(ref _stepDownMm, value); }
     public double StepoverFrac { get => _stepoverFrac; set => Set(ref _stepoverFrac, value); }
     public double Feed { get => _feed; set => Set(ref _feed, value); }
@@ -48,6 +50,7 @@ public sealed class CutParameters : INotifyPropertyChanged
     public JobParams ToJob() => new()
     {
         TargetDepthMm = TargetDepthMm,
+        PocketDepthMm = PocketDepthMm,
         StepDownMm = StepDownMm,
         StepoverFrac = StepoverFrac,
         Feed = Feed,

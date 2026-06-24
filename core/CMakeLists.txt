@@ -18,7 +18,10 @@ add_library(contourcam_geometry STATIC
 if(CONTOURCAM_USE_OCCT)
     find_package(OpenCASCADE CONFIG REQUIRED)
     target_include_directories(contourcam_geometry PRIVATE ${OpenCASCADE_INCLUDE_DIR})
-    target_link_libraries(contourcam_geometry PUBLIC ${OpenCASCADE_LIBRARIES})
+    # OCCT is an internal detail of pocket.cpp (no public header exposes it), so
+    # link PRIVATE; CMake still propagates it to the final exe/dll link.
+    target_link_libraries(contourcam_geometry PRIVATE ${OpenCASCADE_LIBRARIES})
+    # Keep the macro PUBLIC so consumers' compiles agree on occtEnabled()'s value.
     target_compile_definitions(contourcam_geometry PUBLIC CONTOURCAM_HAVE_OCCT)
     message(STATUS "OpenCASCADE ${OpenCASCADE_VERSION} enabled (pocket clearing)")
 endif()

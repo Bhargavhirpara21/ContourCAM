@@ -66,21 +66,30 @@ void appendDrill(Toolpath& tp, const DxfCircle& c, const JobParams& job) {
     tp.segments.push_back({SegmentKind::Rapid, x, y, job.safe_z_mm, 0.0, 0.0, 0.0});
 }
 
-// A depth-1 void is a drilled hole (skip milling) if its centroid coincides with
-// a detected circle centre; otherwise it is a pocket to clear.
+// A void wire is a drilled hole (skip milling) if it matches a detected circle:
+// centroid near the circle centre AND area near pi*r^2 (tolerance scaled to r).
 bool isHoleNode(const WireNode& node, const std::vector<DxfCircle>& circles) {
-    const Point2 c = representativePoint(node.wire.polygon());
+    const std::vector<Point2> poly = node.wire.polygon();
+    const Point2 c = representativePoint(poly);
+    const double area = std::abs(signedArea(poly));
     for (const DxfCircle& circ : circles) {
-        if (distance(c, circ.center) < 0.5) return true;
+        const double circleArea = kPi * circ.radius * circ.radius;
+        const double centreTol = std::max(0.1 * circ.radius, 1e-3);
+        if (distance(c, circ.center) < centreTol && std::abs(area - circleArea) < 0.25 * circleArea) {
+            return true;
+        }
     }
     return false;
 }
 
 // Emit a depth-stepped pocket-clearing path from concentric rings (outer-to-inner).
+// NOTE: entry is a straight plunge per Z step (step_down deep) -- it assumes a
+// centre-cutting end mill in soft stock; a helical/ramp lead-in is future work.
 void appendPocket(Toolpath& tp, const std::vector<std::vector<Point2>>& rings,
                   const JobParams& job) {
     if (rings.empty()) return;
-    const std::vector<double> levels = depthLevels(job.target_depth_mm, job.step_down_mm);
+    const double depth = job.pocket_depth_mm > 0.0 ? job.pocket_depth_mm : job.target_depth_mm;
+    const std::vector<double> levels = depthLevels(depth, job.step_down_mm);
     const Point2 entry = rings.front().front();
 
     tp.segments.push_back({SegmentKind::Rapid, entry.x, entry.y, job.safe_z_mm, 0.0, 0.0, 0.0});
@@ -164,9 +173,12 @@ Toolpath generateToolpath(const PartModel& part, const ToolParams& tool, const J
     const double stepover = tool.diameter_mm * job.stepover_frac;
     for (const WireNode& node : part.nodes) {
         if (node.depth == 0) {
+            // Outermost boundary -> radius-compensated contour on the outside.
             const std::vector<Point2> offset = offsetConvex(node.wire.polygon(), tool.radius());
             appendContour(tp, offset, job);
-        } else if (!isHoleNode(node, part.circles)) {
+        } else if (node.depth % 2 == 1 && !isHoleNode(node, part.circles)) {
+            // Odd depth == a void (pocket) that is not a drilled hole -> clear it.
+            // Even depth >= 2 are solid islands inside a pocket (left standing).
             appendPocket(tp, clearPocketRings(node.wire.polygon(), tool.radius(), stepover), job);
         }
     }

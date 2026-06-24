@@ -45,7 +45,8 @@ struct ToolParams {
 };
 
 struct JobParams {
-    double target_depth_mm = 6.0;   // total cut depth (contour) / drill depth
+    double target_depth_mm = 6.0;   // contour / drilling depth
+    double pocket_depth_mm = 0.0;   // pocket floor depth; 0 => use target_depth_mm
     double step_down_mm = 2.0;      // Z removed per pass
     double stepover_frac = 0.45;    // pocket clearing (OCCT phase)
     double feed = 600.0;            // cutting feed, mm/min

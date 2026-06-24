@@ -41,6 +41,8 @@
                     <TextBlock Text="Job" Foreground="#FFDDDDDD" FontWeight="Bold" Margin="0,0,0,6" />
                     <TextBlock Text="Target depth (mm)" Foreground="#FFB0B0B0" />
                     <TextBox Text="{Binding Parameters.TargetDepthMm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Pocket depth (mm, 0 = use target)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.PocketDepthMm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
                     <TextBlock Text="Step-down (mm)" Foreground="#FFB0B0B0" />
                     <TextBox Text="{Binding Parameters.StepDownMm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
                     <TextBlock Text="Stepover (fraction)" Foreground="#FFB0B0B0" />
