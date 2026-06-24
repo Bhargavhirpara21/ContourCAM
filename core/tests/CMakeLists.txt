@@ -17,11 +17,13 @@ add_executable(contourcam_tests
     test_dxf_reader.cpp
     test_wire_builder.cpp
     test_part_model.cpp
+    test_c_abi.cpp
 )
 
 target_link_libraries(contourcam_tests
     PRIVATE
-        contourcam_geometry
+        contourcam_geometry   # geometry tested directly
+        contourcam_core       # the flat C ABI (shared lib) tested at the boundary
         GTest::gtest_main
 )
 

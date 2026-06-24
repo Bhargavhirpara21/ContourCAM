@@ -44,16 +44,16 @@ jobs:
       - name: Build C# smoke
         run: dotnet build app-csharp/smoke -c Release --nologo
 
-      - name: Run C# smoke (P/Invoke)
+      - name: Run C# smoke (P/Invoke -> geometry)
         shell: bash
         run: |
           out="app-csharp/smoke/bin/Release/net8.0"
           cp "${{ matrix.libdir }}"/*contourcam_core.* "$out"/
-          dotnet "$out/contourcam-smoke.dll"
+          dotnet "$out/contourcam-smoke.dll" samples/plate_pocket_holes.dxf
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Run Python smoke (ctypes)
-        run: python automation-python/smoke.py "${{ matrix.libdir }}"
+      - name: Run Python smoke (ctypes -> geometry)
+        run: python automation-python/smoke.py "${{ matrix.libdir }}" samples/plate_pocket_holes.dxf

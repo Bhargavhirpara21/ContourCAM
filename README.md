@@ -23,7 +23,7 @@ It is **not** production- or vendor-grade CAM (2.5D only; generic ISO G-code).
          v                        v
         [   Flat C ABI  (contourcam_c_api.h)   ]
                         |
-                 [  C++20 core library  ]   ->  OpenCASCADE (from Phase 1)
+                 [  C++20 core library  ]   ->  OpenCASCADE (Phase 2)
 ```
 
 The C++ core is the single source of truth for all geometry/CAM logic; C# and
@@ -79,5 +79,6 @@ shared library; the unit tests cover the Phase 1 geometry pipeline.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Third-party components (e.g. OpenCASCADE, from
-Phase 1) are credited in `THIRD_PARTY_NOTICES.md`.
+MIT — see [LICENSE](LICENSE). Third-party components are credited in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) — currently GoogleTest (used in
+the test build only). OpenCASCADE will be added there when it lands in Phase 2.

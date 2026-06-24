@@ -25,6 +25,8 @@ set_target_properties(contourcam_geometry PROPERTIES
 # --- Flat C ABI shared library --------------------------------------------
 add_library(contourcam_core SHARED
     src/contourcam_core.cpp
+    src/contourcam_abi.cpp
+    src/abi_detail.hpp
     include/contourcam_c_api.h
 )
 
