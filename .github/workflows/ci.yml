@@ -69,3 +69,15 @@ jobs:
 
       - name: Run Python smoke (ctypes -> geometry)
         run: python automation-python/smoke.py "${{ matrix.libdir }}" samples/plate_pocket_holes.dxf
+
+      - name: M4 parity (C# G-code == Python G-code)
+        shell: bash
+        run: |
+          diff contourcam_csharp.gcode contourcam_python.gcode && echo "M4 parity: byte-identical"
+
+      - name: Python unit tests (pytest)
+        shell: bash
+        run: |
+          python -m pip install --quiet pytest
+          PYTHONPATH=automation-python CONTOURCAM_LIB_DIR="${{ matrix.libdir }}" \
+            python -m pytest automation-python/tests -q
