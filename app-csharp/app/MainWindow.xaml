@@ -1,0 +1,67 @@
+<Window x:Class="ContourCam.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:ContourCam.App.Controls"
+        Title="ContourCAM" Height="720" Width="1120"
+        Background="#FF2D2D30">
+    <DockPanel>
+        <ToolBar DockPanel.Dock="Top">
+            <Button Content="Open DXF…" Command="{Binding OpenCommand}" Padding="8,2" />
+            <Separator />
+            <Button Content="Generate" Command="{Binding GenerateCommand}" Padding="8,2" />
+            <Button Content="Export G-code…" Command="{Binding ExportCommand}" Padding="8,2" />
+        </ToolBar>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <TextBlock Text="{Binding StatusText}" />
+        </StatusBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="280" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Viewport -->
+            <Border Grid.Column="0" Background="#FF1E1E1E" BorderBrush="#FF3F3F46" BorderThickness="1">
+                <ctrl:ViewportControl x:Name="Viewport" />
+            </Border>
+
+            <!-- Parameter panel -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Background="#FF252526">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Tool" Foreground="#FFDDDDDD" FontWeight="Bold" Margin="0,0,0,6" />
+                    <TextBlock Text="Type" Foreground="#FFB0B0B0" />
+                    <ComboBox ItemsSource="{Binding ToolTypes}" SelectedItem="{Binding Parameters.ToolType}" Margin="0,0,0,6" />
+                    <TextBlock Text="Diameter (mm)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.ToolDiameterMm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Flutes" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.Flutes, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" />
+
+                    <TextBlock Text="Job" Foreground="#FFDDDDDD" FontWeight="Bold" Margin="0,0,0,6" />
+                    <TextBlock Text="Target depth (mm)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.TargetDepthMm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Step-down (mm)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.StepDownMm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Stepover (fraction)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.StepoverFrac, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Feed (mm/min)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.Feed, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Plunge feed (mm/min)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.PlungeFeed, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Spindle (rpm)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.SpindleRpm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Safe Z (mm)" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.SafeZmm, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,6" />
+                    <TextBlock Text="Direction" Foreground="#FFB0B0B0" />
+                    <ComboBox ItemsSource="{Binding Directions}" SelectedItem="{Binding Parameters.Direction}" Margin="0,0,0,10" />
+
+                    <TextBlock Text="Post" Foreground="#FFDDDDDD" FontWeight="Bold" Margin="0,0,0,6" />
+                    <CheckBox Content="Metric (G21)" Foreground="#FFB0B0B0" IsChecked="{Binding Parameters.Metric}" Margin="0,0,0,6" />
+                    <TextBlock Text="Tool number" Foreground="#FFB0B0B0" />
+                    <TextBox Text="{Binding Parameters.ToolNumber, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>

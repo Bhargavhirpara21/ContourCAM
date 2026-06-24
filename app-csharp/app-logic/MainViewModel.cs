@@ -20,6 +20,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public CutParameters Parameters { get; } = new();
 
+    /// <summary>Enum value lists for the parameter-panel combo boxes.</summary>
+    public IReadOnlyList<ToolType> ToolTypes { get; } = Enum.GetValues<ToolType>();
+    public IReadOnlyList<CutDirection> Directions { get; } = Enum.GetValues<CutDirection>();
+
     public SceneModel Scene
     {
         get => _scene;

@@ -33,7 +33,9 @@ reimplement geometry.
 | Path | Contents |
 |---|---|
 | `core/` | Native C++ core: `include/contourcam_c_api.h` (the ABI) + `src/` + `tests/` |
-| `app-csharp/` | .NET 8 app(s): P/Invoke interop, WPF viewport (Phase 4) |
+| `app-csharp/interop/` | `ContourCam.Interop`: the shared P/Invoke wrapper over the C ABI |
+| `app-csharp/app/` + `app-logic/` | .NET 8 **WPF desktop app** + its WPF-free, testable view logic |
+| `app-csharp/smoke/` + `tests/` | interop console smoke + xUnit tests |
 | `automation-python/` | ctypes bindings + batch CLI (Phase 5) |
 | `samples/` | Sample DXF/STEP parts |
 | `docs/` | Architecture diagram, screenshots/GIFs |
@@ -50,9 +52,15 @@ the C# app (P/Invoke) and Python (ctypes), which produce **byte-identical**
 G-code for the same input (the M4 parity goal). A GoogleTest suite (35 tests)
 runs in CI on Windows + Linux.
 
+**Phase 4 — WPF desktop app.** A .NET 8 WPF app (built on a shared
+`ContourCam.Interop` library) opens a DXF, renders the part geometry + a colored
+toolpath overlay in a pan/zoom viewport, exposes the §7 cut parameters, and
+generates/exports G-code (generation runs off the UI thread). The WPF-free app
+logic + interop layer are covered by xUnit tests on Windows + Linux.
+
 **Pocket clearing with island avoidance** (the PRD "heart") and general/concave
 offsetting need robust 2D offsets and arrive with **OpenCASCADE** (next phase).
-The Phase 0 bridge still stands underneath: one shared library, three languages.
+Underneath it all: one shared C++ core, three consumers (C#, Python, tests).
 
 ## Build & run
 
@@ -73,11 +81,19 @@ dotnet run --project app-csharp/smoke
 
 # 4. Run the Python smoke (point it at the build output dir)
 python automation-python/smoke.py build/bin/Release   # Linux: build/bin
+
+# 5. Run the WPF desktop app (Windows). Open samples/plate_pocket_holes.dxf,
+#    then Generate and Export G-code.
+dotnet run --project app-csharp/app -c Release
+
+# 6. Run the .NET unit tests (set the core dir so the interop tests can load it)
+CONTOURCAM_LIB_DIR=build/bin/Release dotnet test app-csharp/tests   # Linux: build/bin
 ```
 
 Both smoke consumers load the sample part, generate an outer-contour toolpath,
-and export **byte-identical** G-code from the one shared library; the unit tests
-cover the geometry + toolpath + G-code pipeline (35 tests).
+and export **byte-identical** G-code from the one shared library. Coverage:
+36 GoogleTest (C++), 15 xUnit (.NET interop + view logic), and pytest (Python),
+all green in CI on Windows + Linux.
 
 ## License
 

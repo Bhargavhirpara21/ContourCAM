@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The WPF desktop app (Windows-only TFM). Holds only XAML, code-behind and the
+    viewport control; all testable logic lives in ContourCam.App.Logic.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ContourCam.App</RootNamespace>
+    <AssemblyName>ContourCAM</AssemblyName>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../interop/ContourCam.Interop.csproj" />
+    <ProjectReference Include="../app-logic/ContourCam.App.Logic.csproj" />
+  </ItemGroup>
+
+</Project>

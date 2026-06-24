@@ -81,3 +81,15 @@ jobs:
           python -m pip install --quiet pytest
           PYTHONPATH=automation-python CONTOURCAM_LIB_DIR="${{ matrix.libdir }}" \
             python -m pytest automation-python/tests -q
+
+      # The WPF app is net8.0-windows: build the whole solution only on Windows
+      # (this is M1's "C# app builds on Windows"). The app is never run headless.
+      - name: Build .NET solution (Windows)
+        if: runner.os == 'Windows'
+        run: dotnet build ContourCAM.sln -c Release --nologo
+
+      - name: .NET unit tests (xUnit, both OS)
+        shell: bash
+        run: |
+          CONTOURCAM_LIB_DIR="$PWD/${{ matrix.libdir }}" \
+            dotnet test app-csharp/tests/ContourCam.Tests.csproj -c Release --nologo
