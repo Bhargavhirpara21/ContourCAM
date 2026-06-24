@@ -17,6 +17,17 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
+      "name": "windows-occt",
+      "displayName": "Windows MSVC + OpenCASCADE (Ninja, Release)",
+      "inherits": "windows-ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-windows-rel",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/vcpkg-triplets",
+        "CONTOURCAM_USE_OCCT": "ON"
+      }
+    },
+    {
       "name": "linux-ninja",
       "displayName": "Linux Ninja (Release)",
       "generator": "Ninja",
@@ -27,6 +38,7 @@
   "buildPresets": [
     { "name": "windows-msvc", "configurePreset": "windows-msvc", "configuration": "Release" },
     { "name": "windows-ninja", "configurePreset": "windows-ninja" },
+    { "name": "windows-occt", "configurePreset": "windows-occt" },
     { "name": "linux-ninja", "configurePreset": "linux-ninja" }
   ]
 }

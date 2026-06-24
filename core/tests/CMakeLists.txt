@@ -20,6 +20,7 @@ add_executable(contourcam_tests
     test_c_abi.cpp
     test_toolpath.cpp
     test_gcode.cpp
+    test_pocket.cpp
 )
 
 target_link_libraries(contourcam_tests

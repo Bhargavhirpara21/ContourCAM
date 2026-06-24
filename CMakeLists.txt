@@ -26,6 +26,11 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# OpenCASCADE-backed pocket clearing. OFF by default so the core builds with no
+# heavy dependency (and CI stays green); enable via the windows-occt preset,
+# which supplies the vcpkg toolchain + occt.
+option(CONTOURCAM_USE_OCCT "Enable OpenCASCADE-backed pocket clearing" OFF)
+
 add_subdirectory(core)
 
 # Unit tests pull GoogleTest via FetchContent (fast, self-contained); disable

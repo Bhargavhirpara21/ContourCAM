@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 
+#include "cam/pocket.hpp"
 #include "geom/polygon.hpp"
 
 namespace contourcam {
@@ -65,6 +66,41 @@ void appendDrill(Toolpath& tp, const DxfCircle& c, const JobParams& job) {
     tp.segments.push_back({SegmentKind::Rapid, x, y, job.safe_z_mm, 0.0, 0.0, 0.0});
 }
 
+// A depth-1 void is a drilled hole (skip milling) if its centroid coincides with
+// a detected circle centre; otherwise it is a pocket to clear.
+bool isHoleNode(const WireNode& node, const std::vector<DxfCircle>& circles) {
+    const Point2 c = representativePoint(node.wire.polygon());
+    for (const DxfCircle& circ : circles) {
+        if (distance(c, circ.center) < 0.5) return true;
+    }
+    return false;
+}
+
+// Emit a depth-stepped pocket-clearing path from concentric rings (outer-to-inner).
+void appendPocket(Toolpath& tp, const std::vector<std::vector<Point2>>& rings,
+                  const JobParams& job) {
+    if (rings.empty()) return;
+    const std::vector<double> levels = depthLevels(job.target_depth_mm, job.step_down_mm);
+    const Point2 entry = rings.front().front();
+
+    tp.segments.push_back({SegmentKind::Rapid, entry.x, entry.y, job.safe_z_mm, 0.0, 0.0, 0.0});
+    for (const double z : levels) {
+        bool firstRing = true;
+        for (const std::vector<Point2>& ring : rings) {
+            if (ring.size() < 3) continue;
+            const double entryFeed = firstRing ? job.plunge_feed : job.feed;
+            tp.segments.push_back({SegmentKind::Feed, ring[0].x, ring[0].y, z, 0.0, 0.0, entryFeed});
+            firstRing = false;
+            for (std::size_t k = 1; k < ring.size(); ++k) {
+                tp.segments.push_back(
+                    {SegmentKind::Feed, ring[k].x, ring[k].y, z, 0.0, 0.0, job.feed});
+            }
+            tp.segments.push_back({SegmentKind::Feed, ring[0].x, ring[0].y, z, 0.0, 0.0, job.feed});
+        }
+    }
+    tp.segments.push_back({SegmentKind::Rapid, entry.x, entry.y, job.safe_z_mm, 0.0, 0.0, 0.0});
+}
+
 }  // namespace
 
 std::vector<double> depthLevels(double target_depth, double step_down) {
@@ -123,12 +159,16 @@ Toolpath generateToolpath(const PartModel& part, const ToolParams& tool, const J
         return tp;
     }
 
-    // End mill: radius-compensated OUTER contour(s), profiled on the outside.
-    // Inner loops (pocket, holes) are voids -- pocket clearing arrives with OCCT.
+    // End mill: radius-compensated OUTER contour (outside), plus pocket clearing
+    // for inner voids that are not drilled holes (needs OCCT; otherwise no rings).
+    const double stepover = tool.diameter_mm * job.stepover_frac;
     for (const WireNode& node : part.nodes) {
-        if (node.depth != 0) continue;
-        const std::vector<Point2> offset = offsetConvex(node.wire.polygon(), tool.radius());
-        appendContour(tp, offset, job);
+        if (node.depth == 0) {
+            const std::vector<Point2> offset = offsetConvex(node.wire.polygon(), tool.radius());
+            appendContour(tp, offset, job);
+        } else if (!isHoleNode(node, part.circles)) {
+            appendPocket(tp, clearPocketRings(node.wire.polygon(), tool.radius(), stepover), job);
+        }
     }
     return tp;
 }

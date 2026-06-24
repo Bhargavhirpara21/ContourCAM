@@ -10,7 +10,18 @@ add_library(contourcam_geometry STATIC
     src/geom/part_model.cpp
     src/cam/toolpath.cpp
     src/cam/gcode.cpp
+    src/cam/pocket.cpp
 )
+
+# Optional OpenCASCADE backend for robust pocket clearing (offset + islands).
+# pocket.cpp always compiles; the OCCT code inside is guarded by CONTOURCAM_HAVE_OCCT.
+if(CONTOURCAM_USE_OCCT)
+    find_package(OpenCASCADE CONFIG REQUIRED)
+    target_include_directories(contourcam_geometry PRIVATE ${OpenCASCADE_INCLUDE_DIR})
+    target_link_libraries(contourcam_geometry PUBLIC ${OpenCASCADE_LIBRARIES})
+    target_compile_definitions(contourcam_geometry PUBLIC CONTOURCAM_HAVE_OCCT)
+    message(STATUS "OpenCASCADE ${OpenCASCADE_VERSION} enabled (pocket clearing)")
+endif()
 
 target_include_directories(contourcam_geometry
     PUBLIC
