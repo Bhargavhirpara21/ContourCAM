@@ -8,6 +8,7 @@ add_library(contourcam_geometry STATIC
     src/geom/dxf_reader.cpp
     src/geom/wire_builder.cpp
     src/geom/part_model.cpp
+    src/cam/toolpath.cpp
 )
 
 target_include_directories(contourcam_geometry

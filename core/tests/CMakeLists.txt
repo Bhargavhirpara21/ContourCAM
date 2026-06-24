@@ -18,6 +18,7 @@ add_executable(contourcam_tests
     test_wire_builder.cpp
     test_part_model.cpp
     test_c_abi.cpp
+    test_toolpath.cpp
 )
 
 target_link_libraries(contourcam_tests
