@@ -21,7 +21,7 @@ It is **not** production- or vendor-grade CAM (2.5D only; generic ISO G-code).
          v                        v
         [   Flat C ABI  (contourcam_c_api.h)   ]
                         |
-                 [  C++20 core library  ]   ->  OpenCASCADE (Phase 2)
+                 [  C++20 core library  ]   ->  OpenCASCADE (pocket clearing)
 ```
 
 The C++ core is the single source of truth for all geometry/CAM logic; C# and
@@ -49,7 +49,7 @@ radius-compensated **outer contour** (profiled outside, winding-correct),
 **drilling** cycles at detected holes, and **2.5D depth passes**, emitting a
 deterministic ISO 6983 / RS-274 program. The same core is driven from **both**
 the C# app (P/Invoke) and Python (ctypes), which produce **byte-identical**
-G-code for the same input (the M4 parity goal). A GoogleTest suite (35 tests)
+G-code for the same input (the M4 parity goal). A GoogleTest suite (38 tests)
 runs in CI on Windows + Linux.
 
 **Phase 4 — WPF desktop app.** A .NET 8 WPF app (built on a shared
@@ -58,9 +58,12 @@ toolpath overlay in a pan/zoom viewport, exposes the §7 cut parameters, and
 generates/exports G-code (generation runs off the UI thread). The WPF-free app
 logic + interop layer are covered by xUnit tests on Windows + Linux.
 
-**Pocket clearing with island avoidance** (the PRD "heart") and general/concave
-offsetting need robust 2D offsets and arrive with **OpenCASCADE** (next phase).
-Underneath it all: one shared C++ core, three consumers (C#, Python, tests).
+**Pocket clearing — the PRD "heart" — is done**, built on **OpenCASCADE**
+(optional `CONTOURCAM_USE_OCCT` build): concentric inward 2D offsets clear the
+pocket to its own floor depth, so the full sample part (outer profile + cleared
+40×30 pocket + 4 drilled holes) generates end-to-end — verified through the
+Python consumer and by GoogleTests, with a dedicated OCCT CI job (vcpkg binary
+cached). Underneath it all: one shared C++ core, three consumers.
 
 ## Build & run
 
@@ -88,15 +91,22 @@ dotnet run --project app-csharp/app -c Release
 
 # 6. Run the .NET unit tests (set the core dir so the interop tests can load it)
 CONTOURCAM_LIB_DIR=build/bin/Release dotnet test app-csharp/tests   # Linux: build/bin
+
+# 7. (Optional) Pocket clearing via OpenCASCADE. Needs vcpkg with `opencascade`
+#    and VCPKG_ROOT set; then the app and Python clear pockets too.
+cmake --preset windows-occt
+cmake --build --preset windows-occt
+ctest --test-dir build --output-on-failure
 ```
 
 Both smoke consumers load the sample part, generate an outer-contour toolpath,
 and export **byte-identical** G-code from the one shared library. Coverage:
-36 GoogleTest (C++), 15 xUnit (.NET interop + view logic), and pytest (Python),
-all green in CI on Windows + Linux.
+38 GoogleTest (C++, incl. OCCT pocket clearing), 15 xUnit (.NET interop + view
+logic), and pytest (Python), all green in CI on Windows + Linux.
 
 ## License
 
 MIT — see [LICENSE](LICENSE). Third-party components are credited in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) — currently GoogleTest (used in
-the test build only). OpenCASCADE will be added there when it lands in Phase 2.
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md): GoogleTest (test build) and
+OpenCASCADE (LGPL-2.1 + Open CASCADE exception, dynamically linked, optional
+OCCT build).
