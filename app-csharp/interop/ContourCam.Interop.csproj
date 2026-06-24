@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared interop layer: the single source of truth for the ContourCAM flat
+    C ABI. net8.0 (NOT -windows) so it is reusable from the WPF app, the console
+    smoke, the test project, and Linux CI. x64 to match the native core.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ContourCam.Interop</RootNamespace>
+    <AssemblyName>ContourCam.Interop</AssemblyName>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+</Project>

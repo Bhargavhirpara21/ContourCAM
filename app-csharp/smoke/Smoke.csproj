@@ -1,19 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Phase 0 interop smoke test. A plain console app (net8.0, cross-platform) so
-    it can also run in Linux CI. The WPF app (net8.0-windows) arrives in Phase 4.
-    x64 is pinned to match the native core's bitness (interop hard rule).
+    Phase 0 interop smoke. net8.0 console (cross-platform, also runs in Linux CI)
+    now built on the shared ContourCam.Interop library so the single interop
+    layer is exercised by the existing CI smoke + M4 parity gate.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>ContourCam.Interop.Smoke</RootNamespace>
+    <RootNamespace>ContourCam.Smoke</RootNamespace>
     <AssemblyName>contourcam-smoke</AssemblyName>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../interop/ContourCam.Interop.csproj" />
+  </ItemGroup>
 
 </Project>
