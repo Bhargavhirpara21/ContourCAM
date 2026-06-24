@@ -47,6 +47,49 @@ internal static class Native
     [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
     public static extern int cc_free_document(IntPtr doc);
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ToolParams
+    {
+        public double DiameterMm;
+        public int Flutes;
+        public int Type;  // 0 = end mill, 1 = drill
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct JobParams
+    {
+        public double TargetDepthMm;
+        public double StepDownMm;
+        public double StepoverFrac;
+        public double Feed;
+        public double PlungeFeed;
+        public double SpindleRpm;
+        public double SafeZmm;
+        public int Direction;  // 0 = climb, 1 = conventional
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PostParams
+    {
+        public int Metric;       // 1 = G21 mm
+        public int Coolant;
+        public int ToolNumber;
+    }
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int cc_generate_toolpath(IntPtr doc, in ToolParams tool, in JobParams job,
+                                                  out IntPtr tp);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int cc_toolpath_segment_count(IntPtr tp, out int count);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern int cc_export_gcode(IntPtr tp, [MarshalAs(UnmanagedType.LPStr)] string path,
+                                             in PostParams post);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int cc_free_toolpath(IntPtr tp);
+
     public static string Version() => Marshal.PtrToStringAnsi(cc_version()) ?? string.Empty;
 
     public static string LastError() => Marshal.PtrToStringAnsi(cc_last_error()) ?? string.Empty;
@@ -107,6 +150,39 @@ internal static class Program
             {
                 Console.Error.WriteLine($"[C#] FAIL: expected outer=1, circles=4 (got {outers}, {circleCount}, written {written})");
                 return 5;
+            }
+
+            // 3. Generate an outer-contour toolpath and export ISO G-code.
+            var tool = new Native.ToolParams { DiameterMm = 6.0, Flutes = 2, Type = 0 };
+            var job = new Native.JobParams
+            {
+                TargetDepthMm = 6.0, StepDownMm = 2.0, StepoverFrac = 0.45,
+                Feed = 600, PlungeFeed = 200, SpindleRpm = 10000, SafeZmm = 5.0, Direction = 0,
+            };
+            if (Native.cc_generate_toolpath(doc, tool, job, out IntPtr tp) != 0)
+            {
+                Console.Error.WriteLine($"[C#] FAIL: generate_toolpath: {Native.LastError()}");
+                return 6;
+            }
+            try
+            {
+                if (Native.cc_toolpath_segment_count(tp, out int segCount) != 0)
+                {
+                    Console.Error.WriteLine($"[C#] FAIL: segment_count: {Native.LastError()}");
+                    return 7;
+                }
+                var post = new Native.PostParams { Metric = 1, Coolant = 0, ToolNumber = 1 };
+                string gpath = args.Length > 1 ? args[1] : "contourcam_csharp.gcode";
+                if (Native.cc_export_gcode(tp, gpath, post) != 0)
+                {
+                    Console.Error.WriteLine($"[C#] FAIL: export_gcode: {Native.LastError()}");
+                    return 8;
+                }
+                Console.WriteLine($"[C#] contour toolpath: {segCount} segments -> {gpath}");
+            }
+            finally
+            {
+                Native.cc_free_toolpath(tp);
             }
         }
         finally

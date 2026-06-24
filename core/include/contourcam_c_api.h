@@ -47,7 +47,8 @@ typedef enum cc_status {
     CC_ERR_UNKNOWN = 1,
     CC_ERR_INVALID_ARG = 2,
     CC_ERR_PARSE = 3,
-    CC_ERR_BUFFER_TOO_SMALL = 4
+    CC_ERR_BUFFER_TOO_SMALL = 4,
+    CC_ERR_IO = 5
 } cc_status;
 
 /* ============================ Bridge / diagnostics ======================== */
@@ -116,6 +117,73 @@ CC_API cc_status CC_CALL cc_document_get_circles(cc_document doc, cc_circle* out
 
 /* Release a document handle. Passing NULL is a no-op. */
 CC_API cc_status CC_CALL cc_free_document(cc_document doc);
+
+/* ============================ Toolpath + G-code =========================== */
+
+typedef enum cc_tool_type { CC_TOOL_END_MILL = 0, CC_TOOL_DRILL = 1 } cc_tool_type;
+typedef enum cc_cut_direction { CC_CLIMB = 0, CC_CONVENTIONAL = 1 } cc_cut_direction;
+typedef enum cc_segment_kind {
+    CC_RAPID = 0,
+    CC_FEED = 1,
+    CC_ARC_CW = 2,
+    CC_ARC_CCW = 3
+} cc_segment_kind;
+
+typedef struct cc_tool_params {
+    double diameter_mm;
+    int32_t flutes;
+    int32_t type;  /* cc_tool_type */
+} cc_tool_params;
+
+typedef struct cc_job_params {
+    double target_depth_mm;
+    double step_down_mm;
+    double stepover_frac;
+    double feed;
+    double plunge_feed;
+    double spindle_rpm;
+    double safe_z_mm;
+    int32_t direction;  /* cc_cut_direction */
+} cc_job_params;
+
+typedef struct cc_post_params {
+    int32_t metric;       /* 1 -> G21 (mm), 0 -> G20 (inch) */
+    int32_t coolant;      /* 1 -> emit M8/M9 */
+    int32_t tool_number;  /* T word for the tool change */
+} cc_post_params;
+
+/* One ordered move. i/j are arc-centre offsets from the start (arcs only). POD. */
+typedef struct cc_segment {
+    int32_t kind;  /* cc_segment_kind */
+    double x;
+    double y;
+    double z;
+    double i;
+    double j;
+    double feed;
+} cc_segment;
+
+/* Opaque handle to a generated toolpath. Free with cc_free_toolpath. */
+typedef struct cc_toolpath_s* cc_toolpath;
+
+/* Generate a toolpath for one tool over a document (EndMill -> outer contour;
+ * Drill -> hole cycles). *out_tp owns the result on success (NULL on failure). */
+CC_API cc_status CC_CALL cc_generate_toolpath(cc_document doc, const cc_tool_params* tool,
+                                              const cc_job_params* job, cc_toolpath* out_tp);
+
+/* Number of segments in the toolpath. */
+CC_API cc_status CC_CALL cc_toolpath_segment_count(cc_toolpath tp, int32_t* out_count);
+
+/* Copy segments into a caller buffer (two-call pattern; see cc_document_get_circles). */
+CC_API cc_status CC_CALL cc_toolpath_get_segments(cc_toolpath tp, cc_segment* out_buf,
+                                                  int32_t capacity, int32_t* out_written);
+
+/* Write the toolpath as an ISO G-code program to `path`. */
+CC_API cc_status CC_CALL cc_export_gcode(cc_toolpath tp, const char* path,
+                                         const cc_post_params* post);
+
+/* Release a toolpath handle. Passing NULL is a no-op. */
+CC_API cc_status CC_CALL cc_free_toolpath(cc_toolpath tp);
 
 #ifdef __cplusplus
 }  /* extern "C" */

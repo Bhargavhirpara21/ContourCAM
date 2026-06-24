@@ -40,16 +40,19 @@ reimplement geometry.
 
 ## Status
 
-**Phase 1 — geometry ingestion.** The native core now reads the supported DXF
-entity subset (LINE, ARC, CIRCLE, LWPOLYLINE, POLYLINE) with a hand-rolled,
-tolerant reader, stitches loose edges into closed wires (healing small gaps),
-and classifies those wires into an island/containment hierarchy (outer profile
-vs. pockets/holes). It is covered by a GoogleTest suite that runs in CI on
-Windows + Linux. OpenCASCADE is deferred to Phase 2, where it powers robust
-2D offsetting/pocketing.
+**Phase 2 (in progress) — toolpath + G-code over the C ABI.** The native core
+now turns a DXF into machine-ready G-code: it reads the supported DXF subset,
+assembles + heals closed wires, classifies islands, then generates a
+radius-compensated **outer contour** (profiled outside, winding-correct),
+**drilling** cycles at detected holes, and **2.5D depth passes**, emitting a
+deterministic ISO 6983 / RS-274 program. The same core is driven from **both**
+the C# app (P/Invoke) and Python (ctypes), which produce **byte-identical**
+G-code for the same input (the M4 parity goal). A GoogleTest suite (35 tests)
+runs in CI on Windows + Linux.
 
-The Phase 0 bridge (below) still stands: one C++ shared library called from
-both C# (P/Invoke) and Python (ctypes).
+**Pocket clearing with island avoidance** (the PRD "heart") and general/concave
+offsetting need robust 2D offsets and arrive with **OpenCASCADE** (next phase).
+The Phase 0 bridge still stands underneath: one shared library, three languages.
 
 ## Build & run
 
@@ -72,8 +75,9 @@ dotnet run --project app-csharp/smoke
 python automation-python/smoke.py build/bin/Release   # Linux: build/bin
 ```
 
-The smoke layers should all report the same `cc_add(2, 3) = 5` from the one
-shared library; the unit tests cover the Phase 1 geometry pipeline.
+Both smoke consumers load the sample part, generate an outer-contour toolpath,
+and export **byte-identical** G-code from the one shared library; the unit tests
+cover the geometry + toolpath + G-code pipeline (35 tests).
 
 ## License
 

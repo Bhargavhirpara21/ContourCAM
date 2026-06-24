@@ -1,49 +1,53 @@
 """Interop smoke test for the Python (ctypes) layer.
 
 Usage:
-    python smoke.py [LIB_DIR] [DXF_PATH]
+    python smoke.py [LIB_DIR] [DXF_PATH] [GCODE_OUT]
 
-LIB_DIR   directory containing the built native core (e.g. build/bin/Release).
-DXF_PATH  a DXF to load through the C ABI (default: the MVP sample part).
-
-Proves the same compiled core that C# uses is reachable from Python and returns
-the same geometry answers.
+Proves the same compiled core that C# uses is reachable from Python: it loads a
+DXF, queries the geometry, generates an outer-contour toolpath, and exports
+ISO G-code -- all through the C ABI.
 """
 from __future__ import annotations
 
 import sys
 
-from contourcam import load
+from contourcam import END_MILL, CLIMB, JobParams, PostParams, ToolParams, load
 
 
 def main() -> int:
     lib_dir = sys.argv[1] if len(sys.argv) > 1 else None
     dxf = sys.argv[2] if len(sys.argv) > 2 else "samples/plate_pocket_holes.dxf"
+    gcode_out = sys.argv[3] if len(sys.argv) > 3 else "contourcam_python.gcode"
 
     core = load(lib_dir)
     print(f"[Py] core version: {core.version()}")
 
     # 1. Bridge liveness check.
-    result = core.add(2, 3)
-    print(f"[Py] cc_add(2, 3) = {result}")
-    if result != 5:
-        print(f"[Py] FAIL: expected 5, got {result}", file=sys.stderr)
+    if core.add(2, 3) != 5:
+        print("[Py] FAIL: cc_add(2,3) != 5", file=sys.stderr)
         return 2
 
-    # 2. Real geometry through the ABI.
+    # 2. Geometry + toolpath + G-code, all through the core.
     with core.load_dxf(dxf) as doc:
         outers = doc.outer_count()
         circles = doc.circles()
         print(f"[Py] {dxf}: outer={outers}, circles={len(circles)}")
-        for c in circles:
-            print(f"[Py]   hole @ ({c.x:g}, {c.y:g}) r={c.radius:g}")
-
         if outers != 1 or len(circles) != 4:
             print(f"[Py] FAIL: expected outer=1, circles=4 (got {outers}, {len(circles)})",
                   file=sys.stderr)
             return 3
 
-    print("[Py] geometry bridge OK")
+        tool = ToolParams(6.0, 2, END_MILL)
+        job = JobParams(6.0, 2.0, 0.45, 600.0, 200.0, 10000.0, 5.0, CLIMB)
+        with doc.generate_toolpath(tool, job) as tp:
+            n = tp.segment_count()
+            tp.export_gcode(gcode_out, PostParams(1, 0, 1))
+            print(f"[Py] contour toolpath: {n} segments -> {gcode_out}")
+            if n <= 0:
+                print("[Py] FAIL: empty toolpath", file=sys.stderr)
+                return 4
+
+    print("[Py] geometry + toolpath bridge OK")
     return 0
 
 

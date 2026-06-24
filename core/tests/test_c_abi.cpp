@@ -3,6 +3,8 @@
 // covers the exported surface (handles, status codes, the two-call pattern).
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -80,4 +82,41 @@ TEST(CApi, LoadMissingFileReportsParseError) {
     EXPECT_EQ(cc_load_dxf("definitely_not_here.dxf", &doc), CC_ERR_PARSE);
     EXPECT_EQ(doc, nullptr);
     EXPECT_FALSE(std::string(cc_last_error()).empty());
+}
+
+TEST(CApi, GenerateExportToolpath) {
+    cc_document doc = nullptr;
+    ASSERT_EQ(cc_load_dxf(samplePath().c_str(), &doc), CC_OK) << cc_last_error();
+
+    cc_tool_params tool{6.0, 2, CC_TOOL_END_MILL};
+    cc_job_params job{6.0, 2.0, 0.45, 600.0, 200.0, 10000.0, 5.0, CC_CLIMB};
+    cc_toolpath tp = nullptr;
+    ASSERT_EQ(cc_generate_toolpath(doc, &tool, &job, &tp), CC_OK) << cc_last_error();
+    ASSERT_NE(tp, nullptr);
+
+    int32_t n = 0;
+    EXPECT_EQ(cc_toolpath_segment_count(tp, &n), CC_OK);
+    EXPECT_GT(n, 1);
+
+    // Two-call fill, then the buffer-too-small path.
+    std::vector<cc_segment> segs(static_cast<std::size_t>(n));
+    int32_t written = 0;
+    EXPECT_EQ(cc_toolpath_get_segments(tp, segs.data(), n, &written), CC_OK);
+    EXPECT_EQ(written, n);
+    int32_t w2 = -1;
+    EXPECT_EQ(cc_toolpath_get_segments(tp, segs.data(), 1, &w2), CC_ERR_BUFFER_TOO_SMALL);
+    EXPECT_EQ(w2, 0);
+
+    const char* outPath = "cc_abi_export_test.gcode";
+    cc_post_params post{1, 0, 1};
+    ASSERT_EQ(cc_export_gcode(tp, outPath, &post), CC_OK) << cc_last_error();
+
+    std::ifstream f(outPath);
+    const std::string content((std::istreambuf_iterator<char>(f)),
+                              std::istreambuf_iterator<char>());
+    EXPECT_NE(content.find("G21 G90 G17 G54"), std::string::npos);
+    EXPECT_NE(content.find("M30"), std::string::npos);
+
+    EXPECT_EQ(cc_free_toolpath(tp), CC_OK);
+    EXPECT_EQ(cc_free_document(doc), CC_OK);
 }
