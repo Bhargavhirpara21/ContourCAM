@@ -2,9 +2,7 @@
 
 > A 2.5D CAM toolpath & G-code generator with a layered C++ / C# / Python architecture.
 
-<!-- CI badge goes here once the GitHub repo + Actions are live:
-[![CI](https://github.com/<user>/ContourCAM/actions/workflows/ci.yml/badge.svg)](https://github.com/<user>/ContourCAM/actions/workflows/ci.yml)
--->
+[![CI](https://github.com/Bhargavhirpara21/ContourCAM/actions/workflows/ci.yml/badge.svg)](https://github.com/Bhargavhirpara21/ContourCAM/actions/workflows/ci.yml)
 
 ContourCAM converts a 2D engineering drawing (DXF/STEP) into CNC machine
 instructions (**G-code**): it imports a profile, computes radius-compensated
