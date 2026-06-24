@@ -120,3 +120,30 @@ TEST(CApi, GenerateExportToolpath) {
     EXPECT_EQ(cc_free_toolpath(tp), CC_OK);
     EXPECT_EQ(cc_free_document(doc), CC_OK);
 }
+
+TEST(CApi, WirePointsTwoCall) {
+    cc_document doc = nullptr;
+    ASSERT_EQ(cc_load_dxf(samplePath().c_str(), &doc), CC_OK) << cc_last_error();
+
+    int32_t wires = 0;
+    ASSERT_EQ(cc_document_wire_count(doc, &wires), CC_OK);
+    ASSERT_GT(wires, 0);
+
+    int32_t need = 0;
+    EXPECT_EQ(cc_document_wire_point_count(doc, 0, &need), CC_OK);
+    EXPECT_GE(need, 3);  // a closed loop has at least 3 points
+
+    std::vector<cc_point> pts(static_cast<std::size_t>(need));
+    int32_t written = 0;
+    EXPECT_EQ(cc_document_get_wire_points(doc, 0, pts.data(), need, &written), CC_OK);
+    EXPECT_EQ(written, need);
+
+    int32_t w2 = -1;
+    EXPECT_EQ(cc_document_get_wire_points(doc, 0, pts.data(), 0, &w2), CC_ERR_BUFFER_TOO_SMALL);
+    EXPECT_EQ(w2, 0);
+
+    int32_t dummy = 0;
+    EXPECT_EQ(cc_document_wire_point_count(doc, wires, &dummy), CC_ERR_INVALID_ARG);  // out of range
+
+    cc_free_document(doc);
+}

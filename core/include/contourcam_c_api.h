@@ -87,6 +87,12 @@ typedef struct cc_circle {
     double radius;
 } cc_circle;
 
+/* A 2D point in millimetres. POD. */
+typedef struct cc_point {
+    double x;
+    double y;
+} cc_point;
+
 /*
  * Parse + assemble + classify a DXF file into a document handle. On success
  * *out_doc owns the result (release with cc_free_document) and is non-NULL; on
@@ -114,6 +120,16 @@ CC_API cc_status CC_CALL cc_document_circle_count(cc_document doc, int32_t* out_
  */
 CC_API cc_status CC_CALL cc_document_get_circles(cc_document doc, cc_circle* out_buf,
                                                  int32_t capacity, int32_t* out_written);
+
+/* Number of polyline points approximating closed wire `wire_index`
+ * (0 .. wire_count-1). Lets a viewport draw the part the core actually sees. */
+CC_API cc_status CC_CALL cc_document_wire_point_count(cc_document doc, int32_t wire_index,
+                                                      int32_t* out_count);
+
+/* Copy wire `wire_index`'s polyline points into a caller buffer (two-call pattern). */
+CC_API cc_status CC_CALL cc_document_get_wire_points(cc_document doc, int32_t wire_index,
+                                                     cc_point* out_buf, int32_t capacity,
+                                                     int32_t* out_written);
 
 /* Release a document handle. Passing NULL is a no-op. */
 CC_API cc_status CC_CALL cc_free_document(cc_document doc);

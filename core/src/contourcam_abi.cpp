@@ -166,6 +166,73 @@ cc_status CC_CALL cc_document_get_circles(cc_document doc, cc_circle* out_buf, i
     }
 }
 
+cc_status CC_CALL cc_document_wire_point_count(cc_document doc, int32_t wire_index,
+                                              int32_t* out_count) {
+    try {
+        if (doc == nullptr || out_count == nullptr) {
+            setLastError("cc_document_wire_point_count: null argument");
+            return CC_ERR_INVALID_ARG;
+        }
+        if (wire_index < 0 ||
+            static_cast<std::size_t>(wire_index) >= doc->model.nodes.size()) {
+            setLastError("cc_document_wire_point_count: wire index out of range");
+            return CC_ERR_INVALID_ARG;
+        }
+        const std::size_t pts =
+            doc->model.nodes[static_cast<std::size_t>(wire_index)].wire.polygon().size();
+        return countOut(doc, out_count, pts, "cc_document_wire_point_count: null argument");
+    } catch (...) {
+        setLastError("cc_document_wire_point_count: unknown exception");
+        return CC_ERR_UNKNOWN;
+    }
+}
+
+cc_status CC_CALL cc_document_get_wire_points(cc_document doc, int32_t wire_index,
+                                              cc_point* out_buf, int32_t capacity,
+                                              int32_t* out_written) {
+    try {
+        if (doc == nullptr || out_written == nullptr) {
+            setLastError("cc_document_get_wire_points: null argument");
+            return CC_ERR_INVALID_ARG;
+        }
+        if (wire_index < 0 ||
+            static_cast<std::size_t>(wire_index) >= doc->model.nodes.size()) {
+            setLastError("cc_document_get_wire_points: wire index out of range");
+            return CC_ERR_INVALID_ARG;
+        }
+        const std::vector<contourcam::Point2> pts =
+            doc->model.nodes[static_cast<std::size_t>(wire_index)].wire.polygon();
+        if (!fitsInt32(pts.size())) {
+            *out_written = 0;
+            setLastError("cc_document_get_wire_points: count exceeds int32 range");
+            return CC_ERR_UNKNOWN;
+        }
+        const int32_t count = static_cast<int32_t>(pts.size());
+
+        if (out_buf == nullptr) {
+            *out_written = count;
+            clearLastError();
+            return CC_OK;
+        }
+        if (capacity < count) {
+            *out_written = 0;
+            setLastError("cc_document_get_wire_points: buffer too small (need " +
+                         std::to_string(count) + ")");
+            return CC_ERR_BUFFER_TOO_SMALL;
+        }
+        for (int32_t k = 0; k < count; ++k) {
+            out_buf[k].x = pts[static_cast<std::size_t>(k)].x;
+            out_buf[k].y = pts[static_cast<std::size_t>(k)].y;
+        }
+        *out_written = count;
+        clearLastError();
+        return CC_OK;
+    } catch (...) {
+        setLastError("cc_document_get_wire_points: unknown exception");
+        return CC_ERR_UNKNOWN;
+    }
+}
+
 cc_status CC_CALL cc_free_document(cc_document doc) {
     try {
         delete doc;  // deleting nullptr is well-defined
