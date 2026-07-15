@@ -83,10 +83,16 @@ bool isHoleNode(const WireNode& node, const std::vector<DxfCircle>& circles) {
 }
 
 // Emit a depth-stepped pocket-clearing path from concentric rings (outer-to-inner).
-// NOTE: entry is a straight plunge per Z step (step_down deep) -- it assumes a
-// centre-cutting end mill in soft stock; a helical/ramp lead-in is future work.
+// NOTE: entry is a straight plunge per Z step -- it assumes a centre-cutting end
+// mill in soft stock; a helical/ramp lead-in is future work.
+//
+// retractBetweenRings: for pockets with islands, enter every ring from above
+// (retract to safe Z, rapid over the entry, plunge) so no cutting move ever
+// crosses a standing island -- including when an island splits the pocket into
+// disjoint sub-pockets. Without islands the rings are nested and linked by feed
+// moves (the original, more efficient behaviour), which never cross material.
 void appendPocket(Toolpath& tp, const std::vector<std::vector<Point2>>& rings,
-                  const JobParams& job) {
+                  const JobParams& job, bool retractBetweenRings = false) {
     if (rings.empty()) return;
     const double depth = job.pocket_depth_mm > 0.0 ? job.pocket_depth_mm : job.target_depth_mm;
     const std::vector<double> levels = depthLevels(depth, job.step_down_mm);
@@ -97,14 +103,29 @@ void appendPocket(Toolpath& tp, const std::vector<std::vector<Point2>>& rings,
         bool firstRing = true;
         for (const std::vector<Point2>& ring : rings) {
             if (ring.size() < 3) continue;
-            const double entryFeed = firstRing ? job.plunge_feed : job.feed;
-            tp.segments.push_back({SegmentKind::Feed, ring[0].x, ring[0].y, z, 0.0, 0.0, entryFeed});
+            if (retractBetweenRings) {
+                // Rapid over the ring entry at safe Z (above the stock, so the XY
+                // move cannot cross an island), then plunge straight down.
+                tp.segments.push_back(
+                    {SegmentKind::Rapid, ring[0].x, ring[0].y, job.safe_z_mm, 0.0, 0.0, 0.0});
+                tp.segments.push_back(
+                    {SegmentKind::Feed, ring[0].x, ring[0].y, z, 0.0, 0.0, job.plunge_feed});
+            } else {
+                const double entryFeed = firstRing ? job.plunge_feed : job.feed;
+                tp.segments.push_back(
+                    {SegmentKind::Feed, ring[0].x, ring[0].y, z, 0.0, 0.0, entryFeed});
+            }
             firstRing = false;
             for (std::size_t k = 1; k < ring.size(); ++k) {
                 tp.segments.push_back(
                     {SegmentKind::Feed, ring[k].x, ring[k].y, z, 0.0, 0.0, job.feed});
             }
             tp.segments.push_back({SegmentKind::Feed, ring[0].x, ring[0].y, z, 0.0, 0.0, job.feed});
+            if (retractBetweenRings) {
+                // Retract straight up before moving to the next ring's entry.
+                tp.segments.push_back(
+                    {SegmentKind::Rapid, ring[0].x, ring[0].y, job.safe_z_mm, 0.0, 0.0, 0.0});
+            }
         }
     }
     tp.segments.push_back({SegmentKind::Rapid, entry.x, entry.y, job.safe_z_mm, 0.0, 0.0, 0.0});
@@ -177,9 +198,20 @@ Toolpath generateToolpath(const PartModel& part, const ToolParams& tool, const J
             const std::vector<Point2> offset = offsetConvex(node.wire.polygon(), tool.radius());
             appendContour(tp, offset, job);
         } else if (node.depth % 2 == 1 && !isHoleNode(node, part.circles)) {
-            // Odd depth == a void (pocket) that is not a drilled hole -> clear it.
-            // Even depth >= 2 are solid islands inside a pocket (left standing).
-            appendPocket(tp, clearPocketRings(node.wire.polygon(), tool.radius(), stepover), job);
+            // Odd depth == a void (pocket) that is not a drilled hole -> clear it,
+            // clearing AROUND any solid island standing inside it (its even-depth,
+            // non-hole children). Each island is otherwise left standing (skipped
+            // when reached in its own iteration).
+            std::vector<std::vector<Point2>> islands;
+            for (const int childIdx : node.children) {
+                const WireNode& child = part.nodes[static_cast<std::size_t>(childIdx)];
+                if (child.isOuter && !isHoleNode(child, part.circles)) {
+                    islands.push_back(child.wire.polygon());
+                }
+            }
+            const std::vector<std::vector<Point2>> pocketRings =
+                clearPocketRings(node.wire.polygon(), tool.radius(), stepover, islands);
+            appendPocket(tp, pocketRings, job, /*retractBetweenRings=*/!islands.empty());
         }
     }
     return tp;

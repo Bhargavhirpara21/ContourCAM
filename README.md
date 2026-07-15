@@ -49,7 +49,7 @@ radius-compensated **outer contour** (profiled outside, winding-correct),
 **drilling** cycles at detected holes, and **2.5D depth passes**, emitting a
 deterministic ISO 6983 / RS-274 program. The same core is driven from **both**
 the C# app (P/Invoke) and Python (ctypes), which produce **byte-identical**
-G-code for the same input (the M4 parity goal). A GoogleTest suite (38 tests)
+G-code for the same input (the M4 parity goal). A GoogleTest suite (43 tests)
 runs in CI on Windows + Linux.
 
 **Phase 4 — WPF desktop app.** A .NET 8 WPF app (built on a shared
@@ -63,7 +63,10 @@ logic + interop layer are covered by xUnit tests on Windows + Linux.
 pocket to its own floor depth, so the full sample part (outer profile + cleared
 40×30 pocket + 4 drilled holes) generates end-to-end — verified through the
 Python consumer and by GoogleTests, with a dedicated OCCT CI job (vcpkg binary
-cached). Underneath it all: one shared C++ core, three consumers.
+cached). It also clears **around a standing island** (a boss) without gouging it,
+via per-level boolean region-erosion of the pocket against the island
+(`samples/plate_pocket_island.dxf`). Underneath it all: one shared C++ core,
+three consumers.
 
 ## Build & run
 
@@ -101,7 +104,7 @@ ctest --test-dir build --output-on-failure
 
 Both smoke consumers load the sample part, generate an outer-contour toolpath,
 and export **byte-identical** G-code from the one shared library. Coverage:
-38 GoogleTest (C++, incl. OCCT pocket clearing), 15 xUnit (.NET interop + view
+43 GoogleTest (C++, incl. OCCT pocket clearing + island avoidance), 15 xUnit (.NET interop + view
 logic), and pytest (Python), all green in CI on Windows + Linux.
 
 ## License
